@@ -51,21 +51,31 @@
               # shellcheck disable=SC2086
               terraform plan -out=tfplan -input=false ${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }}
 
+          # - name: Create Module Artifact
+          #   run: |
+          #     tree -an -I .terraform/ -I .git
+          #     $stagingDirectory = "staging"
+          #     New-Item -Path . -Name $stagingDirectory -ItemType "directory"
+          #     Copy-Item -Path "*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
+          #     Copy-Item -Path ".terraform.lock.hcl" -Destination "./$stagingDirectory"
+          #     tree -an -- staging
+          #   shell: pwsh
+
           - name: Create Module Artifact
             run: |
-              tree -an -I .terraform/ -I .git
-              $stagingDirectory = "staging"
-              New-Item -Path . -Name $stagingDirectory -ItemType "directory"
-              Copy-Item -Path "*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
-              Copy-Item -Path ".terraform.lock.hcl" -Destination "./$stagingDirectory"
-              tree -an -- staging
-            shell: pwsh
+              stagingDirectory="staging"
+              mkdir -p "$stagingDirectory"
+              rsync -av --exclude=".git" --exclude=".terraform" --exclude=".github" --exclude="$stagingDirectory" ./ "$stagingDirectory/"
+              cp .terraform.lock.hcl "$stagingDirectory/"
+              tree -an "$stagingDirectory"
+            shell: bash
 
           - name: Publish Module Artifact
             uses: actions/upload-artifact@v4
             with:
               name: module
               path: ./staging/
+              include-hidden-files: true
 
           - name: Show the Plan for Review
             run: terraform show tfplan
@@ -98,10 +108,10 @@
           - name: Install Terraform
             uses: hashicorp/setup-terraform@v3
 
-          - name: List the Directory
+          - name: List the Build Artifact
             run: |
               tree -an -I .terraform
-            shell: pwsh
+            shell: bash
 
           - name: Terraform Init
             run: |
