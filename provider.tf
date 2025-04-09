@@ -9,6 +9,10 @@ terraform {
       source  = "microsoft/fabric"
       version = "1.0.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~> 2.40"
+    }
   }
 }
 
@@ -33,5 +37,10 @@ provider "fabric" {
 
   # use_cli = true
   # use_msi  = false
+  use_oidc = true
+}
+
+provider "azuread" {
+  tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
   use_oidc = true
 }
