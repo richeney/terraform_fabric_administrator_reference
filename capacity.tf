@@ -17,9 +17,10 @@ resource "azurerm_fabric_capacity" "fabric" {
 
   # Users as UPN, service principals as object ID
   # Avoids "BadRequest: All provided principals must be existing, user or service principals"
-
-  # administration_members = [data.azurerm_client_config.current.object_id]
-  administration_members = ["admin@MngEnvMCAP520989.onmicrosoft.com"]
+  administration_members = join([
+    "admin@MngEnvMCAP520989.onmicrosoft.com",
+    data.azurerm_client_config.current.object_id
+  ])
 
   sku {
     name = "F2"
