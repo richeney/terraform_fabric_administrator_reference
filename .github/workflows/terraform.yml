@@ -53,12 +53,12 @@
 
           - name: Create Module Artifact
             run: |
-              tree -aAC -I .terraform/ -I .git -I .github
+              tree -an -I .terraform/ -I .git
               $stagingDirectory = "staging"
               New-Item -Path . -Name $stagingDirectory -ItemType "directory"
               Copy-Item -Path "./*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
-              Copy-Item -Path "./.terraform.lock.hcl" -Destination "./$stagingDirectory"
-              Get-ChildItem -Path "./$stagingDirectory" -Recurse
+              Copy-Item Path "./.terraform.lock.hcl" -Destination "./$stagingDirectory"
+              tree -an -- staging
             shell: pwsh
 
           - name: Publish Module Artifact
