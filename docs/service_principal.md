@@ -6,9 +6,13 @@ Based on <https://registry.terraform.io/providers/microsoft/fabric/latest/docs/g
 
     This script
 
-    - Creates the app reg using the manifest.json file
+    - Creates the app reg
+        - uses a manifest.json file, which has the following application API permissions for Microsoft Graph
+        - Group.Read.All
+        - User.ReadBasic.All
     - Creates a service principal
     - Adds you as owner to both, which is optional but recommended
+    - Grants admin consent
 
     ```shell
     appObjId=$(az ad app create --display-name terraform_fabric_administrator --required-resource-accesses @manifest.json --identifier-uris api://terraform_fabric_administrator --query id -otsv)
@@ -17,7 +21,7 @@ Based on <https://registry.terraform.io/providers/microsoft/fabric/latest/docs/g
     myObjId=$(az ad signed-in-user show --query id -otsv)
     az ad app owner add --id $appObjId --owner-object-id $myObjId
     az rest --method POST --url "https://graph.microsoft.com/v1.0/servicePrincipals/${spObjId}/owners/\$ref" --body "{\"@odata.id\": \"https://graph.microsoft.com/v1.0/users/${myObjId}\"}"
-
+    az ad app permission admin-consent --id $appId
     ```
 
     Note that the documentation page doesn't add the API permissions via manifest or add an identifier url. Not sure if these are required.
@@ -29,6 +33,8 @@ Based on <https://registry.terraform.io/providers/microsoft/fabric/latest/docs/g
     Scroll down to Developer settings.
 
     Enable _Allow service principals to create and use profiles_ for _The entire organization_.
+
+    There is no need to add in API permissions for Fabric for service principals. (There are only two there.) It is a rather blunt permissions model right now.
 
 1. Create required RBAC role assignments for the service principal
 

@@ -5,13 +5,13 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 4.25"
     }
-    fabric = {
-      source  = "microsoft/fabric"
-      version = "1.0.0"
-    }
     azuread = {
       source  = "hashicorp/azuread"
       version = "~> 2.40"
+    }
+    fabric = {
+      source  = "microsoft/fabric"
+      version = "~> 1.0"
     }
   }
 }
@@ -22,6 +22,11 @@ provider "azurerm" {
   tenant_id       = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
   subscription_id = "73568139-5c52-4066-a406-3e8533bb0f15"
 
+  # GitHub Actions
+  # use_oidc         = true   # Via ARM_USE_OIDC
+  # use_azuread_auth = true   # Via ARM_USE_AZUREAD
+  # client_id        = <guid> # Via ARM_CLIENT_ID
+
   storage_use_azuread = true
 
   resource_provider_registrations = "core"
@@ -31,16 +36,19 @@ provider "azurerm" {
 }
 
 provider "fabric" {
-  # The Fabric provider requires the Azure AD tenant ID and subscription ID
-  # to be set in the provider block.
   tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
 
-  # use_cli = true
-  # use_msi  = false
-  use_oidc = true
+  # GitHub Actions
+  # use_oidc         = true   # Via ARM_USE_OIDC
+  # use_azuread_auth = true   # Via ARM_USE_AZUREAD
+  # client_id        = <guid> # Via ARM_CLIENT_ID
 }
 
 provider "azuread" {
   tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
-  use_oidc = true
+
+  # GitHub Actions
+  # use_oidc         = true   # Via ARM_USE_OIDC
+  # use_azuread_auth = true   # Via ARM_USE_AZUREAD
+  # client_id        = <guid> # Via ARM_CLIENT_ID
 }
