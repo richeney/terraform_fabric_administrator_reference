@@ -53,6 +53,7 @@
 
           - name: Create Module Artifact
             run: |
+              tree -aAC -I .terraform/ -I .git -I .github
               $stagingDirectory = "staging"
               New-Item -Path . -Name $stagingDirectory -ItemType "directory"
               Copy-Item -Path "./*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
