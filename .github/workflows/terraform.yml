@@ -57,7 +57,7 @@
               New-Item -Path . -Name $stagingDirectory -ItemType "directory"
               Copy-Item -Path "./*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
               Copy-Item -Path "./.terraform.lock.hcl" -Destination "./$stagingDirectory"
-
+              Get-ChildItem -Path "./$stagingDirectory" -Recurse
             shell: pwsh
 
           - name: Publish Module Artifact
