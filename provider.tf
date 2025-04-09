@@ -33,5 +33,5 @@ provider "fabric" {
 
   # use_cli = true
   # use_msi  = false
-  # use_oidc = false
+  use_oidc = true
 }
