@@ -56,8 +56,8 @@
               tree -an -I .terraform/ -I .git
               $stagingDirectory = "staging"
               New-Item -Path . -Name $stagingDirectory -ItemType "directory"
-              Copy-Item -Path "./*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
-              Copy-Item Path "./.terraform.lock.hcl" -Destination "./$stagingDirectory"
+              Copy-Item -Path "*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
+              Copy-Item -Path ".terraform.lock.hcl" -Destination "./$stagingDirectory"
               tree -an -- staging
             shell: pwsh
 
