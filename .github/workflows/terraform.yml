@@ -20,6 +20,7 @@
         permissions:
           id-token: write
           contents: read
+        concurrency: "${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}-${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}"
         env:
           ARM_TENANT_ID: "${{ vars.ARM_TENANT_ID }}"
           ARM_SUBSCRIPTION_ID: "${{ vars.ARM_SUBSCRIPTION_ID }}"
@@ -45,7 +46,7 @@
           - name: Terraform Plan for $${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
             run: |
               # shellcheck disable=SC2086
-              terraform plan -out=tfplan -input=false $${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }}
+              terraform plan -out=tfplan -input=false ${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }}
 
           - name: Create Module Artifact
             run: |
@@ -66,17 +67,17 @@
 
       apply:
         needs: plan
-        name: Terraform $${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
+        name: Terraform ${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
         runs-on:
           ${runner_name}
-        concurrency: ${backend_azure_storage_account_container_name}
+        concurrency: "${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}-${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}"
         permissions:
           id-token: write
           contents: read
         env:
-          ARM_TENANT_ID: "$${{ vars.ARM_TENANT_ID }}"
-          ARM_SUBSCRIPTION_ID: "$${{ vars.ARM_SUBSCRIPTION_ID }}"
-          ARM_CLIENT_ID: "$${{ vars.ARM_CLIENT_ID }}"
+          ARM_TENANT_ID: "${{ vars.ARM_TENANT_ID }}"
+          ARM_SUBSCRIPTION_ID: "${{ vars.ARM_SUBSCRIPTION_ID }}"
+          ARM_CLIENT_ID: "${{ vars.ARM_CLIENT_ID }}"
           ARM_USE_AZUREAD: true
           ARM_USE_OIDC: true
 
@@ -92,10 +93,10 @@
           - name: Terraform Init
             run: |
               terraform init \
-              -backend-config="resource_group_name=$${{vars.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
-              -backend-config="storage_account_name=$${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
-              -backend-config="container_name=$${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
+              -backend-config="resource_group_name=${{vars.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
+              -backend-config="storage_account_name=${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
+              -backend-config="container_name=${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
               -backend-config="key=terraform.tfstate"
 
-          - name: Terraform $${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
+          - name: Terraform ${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
             run: terraform apply -input=false -auto-approve tfplan

@@ -33,8 +33,8 @@ You will need the gh CLI and be authenticated with `gh auth login`.
     cat > terraform_fabric_administrator.credential.json <<CRED
     {
         "name": "terraform_fabric_administrator",
-        "issuer": "https://token.actions.githubusercontent.com/",
-        "subject": "$(gh repo view --json nameWithOwner --template '{{printf "repo:%s:ref:/refs/head/main" .nameWithOwner}}')",
+        "issuer": "https://token.actions.githubusercontent.com",
+        "subject": "$(gh repo view --json nameWithOwner --template '{{printf "repo:%s:ref:refs/heads/main" .nameWithOwner}}')",
         "description": "Terraform Fabric Administrator service principal via OpenID Connect",
         "audiences": [
             "api://AzureADTokenExchange"
