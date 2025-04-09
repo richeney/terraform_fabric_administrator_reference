@@ -98,6 +98,11 @@
           - name: Install Terraform
             uses: hashicorp/setup-terraform@v3
 
+          - name: List the Directory
+            run: |
+              tree -an -I .terraform
+            shell: pwsh
+
           - name: Terraform Init
             run: |
               terraform init \
