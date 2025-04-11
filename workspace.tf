@@ -3,7 +3,8 @@ data "fabric_capacity" "fabric" {
 }
 
 resource "fabric_workspace" "fabric" {
-  display_name = "My Terraform Workspace"
+  for_each     = ["production", "development", "staging"]
+  display_name = each.value
   description  = "This is a test of the Terraform provider."
   capacity_id  = data.fabric_capacity.fabric.id
 
