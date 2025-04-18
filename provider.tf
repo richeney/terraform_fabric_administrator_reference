@@ -20,13 +20,12 @@ terraform {
 provider "azurerm" {
   features {}
 
-  tenant_id       = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
   subscription_id = var.subscription_id
 
-  # GitHub Actions
-  # use_oidc         = true   # Via ARM_USE_OIDC
-  # use_azuread_auth = true   # Via ARM_USE_AZUREAD
-  # client_id        = <guid> # Via ARM_CLIENT_ID
+  # tenant_id        = <guid> # ARM_TENANT_ID
+  # use_oidc         = true   # ARM_USE_OIDC
+  # use_azuread_auth = true   # ARM_USE_AZUREAD
+  # client_id        = <guid> # ARM_CLIENT_ID
 
   storage_use_azuread = true
 
@@ -37,21 +36,15 @@ provider "azurerm" {
 }
 
 provider "fabric" {
-  tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
-
-  use_cli = true
-  # GitHub Actions
-  # use_oidc         = true   # Via ARM_USE_OIDC
-  # use_azuread_auth = true   # Via ARM_USE_AZUREAD
-  # client_id        = <guid> # Via ARM_CLIENT_ID
+  # tenant_id        = <guid> # ARM_TENANT_ID
+  # use_oidc         = true   # ARM_USE_OIDC
+  # use_azuread_auth = true   # ARM_USE_AZUREAD
+  # client_id        = <guid> # ARM_CLIENT_ID
 }
 
 provider "azuread" {
-  tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
-
-  use_cli = true
-  # GitHub Actions
-  # use_oidc         = true   # Via ARM_USE_OIDC
-  # use_azuread_auth = true   # Via ARM_USE_AZUREAD
-  # client_id        = <guid> # Via ARM_CLIENT_ID
+  # tenant_id        = <guid> # ARM_TENANT_ID
+  # use_oidc         = true   # ARM_USE_OIDC
+  # use_azuread_auth = true   # ARM_USE_AZUREAD
+  # client_id        = <guid> # ARM_CLIENT_ID
 }
