@@ -40,7 +40,6 @@ resource "azurerm_fabric_capacity" "fabric" {
   # Avoids "BadRequest: All provided principals must be existing, user or service principals"
   # Ensure that the users or service principals are members of the groups
   administration_members = distinct(concat(
-    ["admin@mngenvmcap520989.onmicrosoft.com"],
     data.azuread_users.fabric_administrators.user_principal_names,
     data.azuread_group.fabric_workload_identities.members
   ))

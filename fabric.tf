@@ -1,5 +1,12 @@
 data "fabric_capacity" "fabric" {
   display_name = azurerm_fabric_capacity.fabric.name
+
+  lifecycle {
+    postcondition {
+      condition     = self.state == "Active"
+      error_message = "Fabric Capacity is not in Active state. Please check the Fabric Capacity status."
+    }
+  }
 }
 
 data "azuread_group" "group" {
@@ -39,7 +46,6 @@ resource "fabric_workspace_role_assignment" "fabric" {
   }
   role = "Member"
 }
-
 
 resource "fabric_lakehouse" "bronze" {
   for_each     = local.workspaces
