@@ -30,6 +30,7 @@
           FABRIC_USE_OIDC: true
           FABRIC_TENANT_ID: "${{ vars.ARM_TENANT_ID }}"
           FABRIC_CLIENT_ID: "${{ vars.ARM_CLIENT_ID }}"
+          TFVARS_FILE: "${{ vars.TFVARS_FILE }}"
 
         steps:
           - name: Checkout Code
@@ -41,6 +42,7 @@
           - name: Terraform Init
             run: |
               terraform init \
+              -backend-config="subscription_id=${{ vars.BACKEND_AZURE_SUBSCRIPTION_ID }}" \
               -backend-config="resource_group_name=${{vars.BACKEND_AZURE_RESOURCE_GROUP_NAME}}" \
               -backend-config="storage_account_name=${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_NAME}}" \
               -backend-config="container_name=${{vars.BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}}" \
@@ -48,8 +50,13 @@
 
           - name: Terraform Plan for ${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
             run: |
-              # shellcheck disable=SC2086
-              terraform plan -out=tfplan -input=false ${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }}
+              if [ -n "${{ env.TFVARS_FILE }}" ]; then
+                echo "Using tfvars file: ${{ env.TFVARS_FILE }}"
+                terraform plan -out=tfplan -input=false ${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }} -var-file=${{ env.TFVARS_FILE }}
+              else
+                echo "No tfvars file specified. Running terraform plan without -var-file."
+                terraform plan -out=tfplan -input=false ${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }}
+              fi
 
           # - name: Create Module Artifact
           #   run: |

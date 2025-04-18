@@ -1,0 +1,18 @@
+{
+    "acceptMappedClaims": null,
+    "knownClientApplications": [],
+    "oauth2PermissionScopes": [
+      {
+        "adminConsentDescription": "Allows connection to backend services for Microsoft Fabric Terraform Provider",
+        "adminConsentDisplayName": "Microsoft Fabric Terraform Provider",
+        "id": "1ca1271c-e2c0-437c-af9a-3a92e745a24d",
+        "isEnabled": true,
+        "type": "User",
+        "userConsentDescription": "Allows connection to backend services for Microsoft Fabric Terraform Provider",
+        "userConsentDisplayName": "Microsoft Fabric Terraform Provider",
+        "value": "access"
+      }
+    ],
+    "preAuthorizedApplications": [],
+    "requestedAccessTokenVersion": null
+  }

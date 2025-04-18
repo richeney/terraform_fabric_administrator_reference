@@ -30,7 +30,7 @@ You will need the gh CLI and be authenticated with `gh auth login`.
 1. Create the OpenID Connect configuration
 
     ```shell
-    cat > terraform_fabric_administrator.credential.json <<CRED
+    cat > oidc.credential.json <<CRED
     {
         "name": "terraform_fabric_administrator",
         "issuer": "https://token.actions.githubusercontent.com",
@@ -42,5 +42,5 @@ You will need the gh CLI and be authenticated with `gh auth login`.
     }
     CRED
 
-    az ad app federated-credential create --id api://terraform_fabric_administrator --parameters terraform_fabric_administrator.credential.json
+    az ad app federated-credential create --id api://terraform_fabric_administrator --parameters oidc.credential.json
     ```

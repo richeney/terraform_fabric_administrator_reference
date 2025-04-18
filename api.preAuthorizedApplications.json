@@ -1,0 +1,43 @@
+{
+    "acceptMappedClaims": null,
+    "knownClientApplications": [],
+    "oauth2PermissionScopes": [
+      {
+        "adminConsentDescription": "Allows connection to backend services for Microsoft Fabric Terraform Provider",
+        "adminConsentDisplayName": "Microsoft Fabric Terraform Provider",
+        "id": "1ca1271c-e2c0-437c-af9a-3a92e745a24d",
+        "isEnabled": true,
+        "type": "User",
+        "userConsentDescription": "Allows connection to backend services for Microsoft Fabric Terraform Provider",
+        "userConsentDisplayName": "Microsoft Fabric Terraform Provider",
+        "value": "access"
+      }
+    ],
+    "preAuthorizedApplications": [
+      {
+        "appId": "871c010f-5e61-4fb1-83ac-98610a7e9110",
+        "delegatedPermissionIds": [
+          "1ca1271c-e2c0-437c-af9a-3a92e745a24d"
+        ]
+      },
+      {
+        "appId": "00000009-0000-0000-c000-000000000000",
+        "delegatedPermissionIds": [
+          "1ca1271c-e2c0-437c-af9a-3a92e745a24d"
+        ]
+      },
+      {
+        "appId": "1950a258-227b-4e31-a9cf-717495945fc2",
+        "delegatedPermissionIds": [
+          "1ca1271c-e2c0-437c-af9a-3a92e745a24d"
+        ]
+      },
+      {
+        "appId": "04b07795-8ddb-461a-bbee-02f9e1bf7b46",
+        "delegatedPermissionIds": [
+          "1ca1271c-e2c0-437c-af9a-3a92e745a24d"
+        ]
+      }
+    ],
+    "requestedAccessTokenVersion": null
+  }

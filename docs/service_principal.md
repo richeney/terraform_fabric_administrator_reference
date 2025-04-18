@@ -15,7 +15,7 @@ Based on <https://registry.terraform.io/providers/microsoft/fabric/latest/docs/g
     - Grants admin consent
 
     ```shell
-    appObjId=$(az ad app create --display-name terraform_fabric_administrator --required-resource-accesses @manifest.json --identifier-uris api://terraform_fabric_administrator --query id -otsv)
+    appObjId=$(az ad app create --display-name terraform_fabric_administrator --required-resource-accesses @manifest.role.json --identifier-uris api://terraform_fabric_administrator --query id -otsv)
     appId=$(az ad app show --id $appObjId --query appId -otsv)
     spObjId=$(az ad sp create --id $appObjId --query id -otsv)
     myObjId=$(az ad signed-in-user show --query id -otsv)

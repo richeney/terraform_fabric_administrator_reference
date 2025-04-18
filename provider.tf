@@ -1,5 +1,6 @@
 terraform {
   required_version = ">= 1.8, < 2.0"
+
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
@@ -20,7 +21,7 @@ provider "azurerm" {
   features {}
 
   tenant_id       = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
-  subscription_id = "73568139-5c52-4066-a406-3e8533bb0f15"
+  subscription_id = var.subscription_id
 
   # GitHub Actions
   # use_oidc         = true   # Via ARM_USE_OIDC
@@ -38,6 +39,7 @@ provider "azurerm" {
 provider "fabric" {
   tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
 
+  use_cli = true
   # GitHub Actions
   # use_oidc         = true   # Via ARM_USE_OIDC
   # use_azuread_auth = true   # Via ARM_USE_AZUREAD
@@ -47,6 +49,7 @@ provider "fabric" {
 provider "azuread" {
   tenant_id = "ac40fc60-2717-4051-a567-c0cd948f0ac9"
 
+  use_cli = true
   # GitHub Actions
   # use_oidc         = true   # Via ARM_USE_OIDC
   # use_azuread_auth = true   # Via ARM_USE_AZUREAD
