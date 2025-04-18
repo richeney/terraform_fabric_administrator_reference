@@ -1,5 +1,5 @@
 subscription_id = "73568139-5c52-4066-a406-3e8533bb0f15"
-sku             = "F4"
+sku             = "F2"
 
 workspaces = [
   {

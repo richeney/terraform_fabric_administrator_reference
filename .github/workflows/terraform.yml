@@ -12,6 +12,8 @@
               - 'apply'
               - 'destroy'
 
+    run-name: Terraform ${{ github.event.inputs.terraform_action == 'destroy' && 'Destroy' || 'Apply' }}
+
     jobs:
       plan:
         name: Terraform Plan

@@ -1,12 +1,12 @@
 # Local testing guide
 
-Use workspaces and tfvars file for local testing using the same backend. There is a default workspace.
+Use workspaces and tfvars file for local testing using the same backend. There is a default workspace, called default.
 
 Based on <https://developer.hashicorp.com/terraform/cli/workspaces>.
 
 This allows quick iterative development and testing prior to pushing to the origin and testing the pipeline.
 
-Note that us
+Note that using a non-default workspace automatically appends `env:<workspace>` to the key.
 
 1. Create a workspace called test
 
@@ -51,6 +51,8 @@ Note that us
     Command line -var and -var-file switches can be used to override other methods to set variables e.g. env vars, *.auto.tfvars, terraform.tfvars.
 
     Note that latter switches take precedence, so `terraform plan -var-file=test.tfvars -var "ident=demo"` would override the ident=test in the variable file.
+
+    If the apply command is run here then the resulting key (or blob name) would be `terraform.tfstateenv:test` and doesn't conflict with the default `terraform.tfstate`. As they are separate blobs each can have its own lease.
 
 ## Other useful workspace commands
 
