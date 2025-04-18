@@ -30,6 +30,7 @@
           FABRIC_USE_OIDC: true
           FABRIC_TENANT_ID: "${{ vars.ARM_TENANT_ID }}"
           FABRIC_CLIENT_ID: "${{ vars.ARM_CLIENT_ID }}"
+          TF_VARS_SUBSCRIPTION_ID: "${{ vars.ARM_SUBSCRIPTION_ID }}"
           TFVARS_FILE: "${{ vars.TFVARS_FILE }}"
 
         steps:
