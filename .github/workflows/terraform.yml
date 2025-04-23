@@ -1,5 +1,5 @@
 ---
-    name: Terraform Apply
+    name: Terraform GitHub Actions Workflow
     on:
       workflow_dispatch:
         inputs:
@@ -60,16 +60,6 @@
                 echo "No tfvars file specified. Running terraform plan without -var-file."
                 terraform plan -out=tfplan -input=false ${{ github.event.inputs.terraform_action == 'destroy' && '-destroy' || '' }}
               fi
-
-          # - name: Create Module Artifact
-          #   run: |
-          #     tree -an -I .terraform/ -I .git
-          #     $stagingDirectory = "staging"
-          #     New-Item -Path . -Name $stagingDirectory -ItemType "directory"
-          #     Copy-Item -Path "*" -Exclude @(".git", ".terraform", ".github",  $stagingDirectory) -Recurse -Destination "./$stagingDirectory"
-          #     Copy-Item -Path ".terraform.lock.hcl" -Destination "./$stagingDirectory"
-          #     tree -an -- staging
-          #   shell: pwsh
 
           - name: Create Module Artifact
             run: |
