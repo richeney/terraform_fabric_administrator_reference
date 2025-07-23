@@ -40,6 +40,7 @@ provider "fabric" {
   # use_oidc         = true   # ARM_USE_OIDC
   # use_azuread_auth = true   # ARM_USE_AZUREAD
   # client_id        = <guid> # ARM_CLIENT_ID
+  preview = true
 }
 
 provider "azuread" {
@@ -47,4 +48,9 @@ provider "azuread" {
   # use_oidc         = true   # ARM_USE_OIDC
   # use_azuread_auth = true   # ARM_USE_AZUREAD
   # client_id        = <guid> # ARM_CLIENT_ID
+}
+
+provider "http" {
+  # Use the HTTP provider to fetch the public IP address for network rules
+  # This is useful for allowing access from the current machine's public IP
 }

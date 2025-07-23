@@ -32,6 +32,21 @@ variable "workspaces" {
   */
 }
 
+// Additional Fabric resources
+
+variable "adls_resource_group_name" {
+  description = "The name of the resource group for the ADLS Gen2 storage account."
+  type        = string
+  default     = "rg-fabric-data"
+}
+
+variable "connection_id" {
+  # Currently manual ☹️
+  # <https://github.com/microsoft/terraform-provider-fabric/issues/343
+  description = "The connection ID for the ADLS Gen2 storage account."
+  type        = string
+  default     = null
+}
 
 // Azure Variables
 
@@ -43,7 +58,7 @@ variable "subscription_id" {
 variable "resource_group_name" {
   description = "The name of the resource group to create."
   type        = string
-  default     = "fabric"
+  default     = "rg-fabric-capacities"
 }
 
 variable "location" {
@@ -58,8 +73,8 @@ variable "sku" {
   default     = "F2"
 }
 
-variable "ident" {
-  description = "The identifier to use for the workspace."
+variable "fabric_capacity_name" {
+  description = "The name to use for the Azure fabric capacity."
   type        = string
   default     = "fabric"
 }

@@ -12,19 +12,19 @@ data "azuread_users" "fabric_administrators" {
   object_ids = data.azuread_group.fabric_administrators.members
 }
 
-locals {
-  capacity = [
-    {
-      ident    = "prod"
-      sku      = "F2"
-      location = "UK South"
-      admins   = data.azuread_group.fabric_administrators.object_id
-    }
-  ]
-
-  # Generate a unique identifier based n a hash of the resource group ID
-  uniq = substr(sha1(azurerm_resource_group.fabric.id), 0, 8)
-}
+## locals {
+##   capacity = [
+##     {
+##       ident    = "prod"
+##       sku      = "F2"
+##       location = "UK South"
+##       admins   = data.azuread_group.fabric_administrators.object_id
+##     }
+##   ]
+##
+##   # Generate a unique identifier based on a hash of the resource group ID
+##   uniq = substr(sha1(azurerm_resource_group.fabric.id), 0, 8)
+## }
 
 resource "azurerm_resource_group" "fabric" {
   name     = var.resource_group_name
@@ -32,7 +32,7 @@ resource "azurerm_resource_group" "fabric" {
 }
 
 resource "azurerm_fabric_capacity" "fabric" {
-  name                = "${var.ident}${local.uniq}"
+  name                = var.fabric_capacity_name
   resource_group_name = azurerm_resource_group.fabric.name
   location            = azurerm_resource_group.fabric.location
 

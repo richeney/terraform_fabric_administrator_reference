@@ -1,0 +1,124 @@
+spec:
+  inputs:
+    terraform_action:
+      type: string
+      description: "Specify Terraform action."
+      options: ['apply','destroy']
+      default: 'apply'
+
+---
+
+default:
+  image: mcr.microsoft.com/azure-cli
+  id_tokens:
+   ARM_OIDC_TOKEN:
+     aud: api://AzureADTokenExchange
+  before_script:
+    # Included for any scripting that needs Azure OIDC auth. (Terraform uses the ARM_ env vars (or FABRIC_USE_OIDC for fabric).)
+    # - az login --service-principal --user "$ARM_CLIENT_ID" --tenant "$ARM_TENANT_ID" --federated-token "$ARM_OIDC_TOKEN"
+    # - az account set --subscription "$ARM_SUBSCRIPTION_ID"
+    # - az account show
+    - export PATH=$PATH:$PWD/.bin
+  cache:
+    key: $CI_PIPELINE_ID
+    paths:
+      - .bin
+      - .terraform
+      - .terraform.lock.hcl
+      - tfplan
+
+variables:
+
+  # These following are automatically injected from GitLab CI/CD variables
+  # - ARM_TENANT_ID
+  # - ARM_SUBSCRIPTION_ID
+  # - ARM_CLIENT_ID
+
+  # - BACKEND_AZURE_SUBSCRIPTION_ID
+  # - BACKEND_AZURE_RESOURCE_GROUP_NAME
+  # - BACKEND_AZURE_STORAGE_ACCOUNT_NAME
+  # - BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME
+  # - TFVARS_FILE
+
+  ARM_USE_AZUREAD: true
+  ARM_USE_OIDC: true
+  FABRIC_USE_OIDC: true
+
+  # https://developer.hashicorp.com/terraform/install#linux for versions
+  TF_VERSION: 1.12.1
+  TF_STATE_NAME: terraform.tfstate
+  TF_ROOT: .
+  TF_PLAN: tfplan
+
+stages:
+  - install
+  - init
+  - validate
+  - plan
+  - approval
+  - apply
+
+
+install:
+  script:
+    - cat /etc/os-release
+    - uname -r
+    - tdnf install -y unzip
+    - echo "Version is ${TF_VERSION}"
+    - test -d .bin || mkdir .bin
+    - curl -sSL https://releases.hashicorp.com/terraform/${TF_VERSION}/terraform_${TF_VERSION}_linux_amd64.zip -o terraform.zip
+    - unzip -d .bin terraform.zip  && rm terraform.zip
+  stage: install
+
+init:
+  script:
+    - cd "${TF_ROOT}"
+    - terraform init
+        -backend-config="subscription_id=${BACKEND_AZURE_SUBSCRIPTION_ID}"
+        -backend-config="resource_group_name=${BACKEND_AZURE_RESOURCE_GROUP_NAME}"
+        -backend-config="storage_account_name=${BACKEND_AZURE_STORAGE_ACCOUNT_NAME}"
+        -backend-config="container_name=${BACKEND_AZURE_STORAGE_ACCOUNT_CONTAINER_NAME}"
+        -backend-config="key=${TF_STATE_NAME}"
+  stage: init
+
+fmt:
+  script:
+    - cd "${TF_ROOT}"
+    - terraform fmt
+  allow_failure: true
+  stage: validate
+
+validate:
+  script:
+    - cd "${TF_ROOT}"
+    - terraform validate
+  stage: validate
+
+plan:
+  script: |
+      if [ -n "$TFVARS_FILE" ]; then
+        echo "Using tfvars file: $TFVARS_FILE"
+        if [ "$[[ inputs.terraform_action ]]" = "destroy" ]; then
+          terraform plan -out=tfplan -input=false -destroy -var-file="$TFVARS_FILE"
+        else
+          terraform plan -out=tfplan -input=false -var-file="$TFVARS_FILE"
+        fi
+      else
+        echo "No tfvars file specified. Running terraform plan without -var-file."
+        if [ "$[[ inputs.terraform_action ]]" = "destroy" ]; then
+          terraform plan -out=tfplan -input=false -destroy
+        else
+          terraform plan -out=tfplan -input=false
+        fi
+      fi
+  stage: plan
+
+apply:
+  script:
+    - terraform apply -input=false -auto-approve tfplan
+  rules:
+    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
+      when: manual
+    - if: $CI_COMMIT_BRANCH != $CI_DEFAULT_BRANCH
+      when: always
+  stage: apply

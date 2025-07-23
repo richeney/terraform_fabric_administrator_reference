@@ -1,5 +1,6 @@
-subscription_id = "73568139-5c52-4066-a406-3e8533bb0f15"
-sku             = "F2"
+subscription_id      = "73568139-5c52-4066-a406-3e8533bb0f15"
+fabric_capacity_name = "fabric-prod-capacity"
+sku                  = "F2"
 
 workspaces = [
   {
