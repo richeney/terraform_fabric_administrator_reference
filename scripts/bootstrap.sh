@@ -3,6 +3,46 @@
 # Bootstraps the resources etc for a Fabric Admin  environment deployed via Terraform
 # App reg, Entra group, Storage Account, Managed Identity
 
+usage() {
+    cat << EOF
+Usage: $0 [OPTIONS]
+
+Bootstraps the resources required for a Fabric Admin environment deployed via Terraform.
+Creates an App Registration, Entra security group, Storage Account, and Managed Identity.
+
+OPTIONS:
+    -g, --resource-group <name>    Resource group name (required)
+    -i, --identity <name>          Managed identity name (default: mi-terraform)
+    -l, --location <region>        Azure region (default: $AZURE_DEFAULTS_LOCATION or uksouth)
+    -m, --management-subscription-id <id>  Management subscription ID (default: current subscription)
+    -r, --role <role_name>         RBAC role to assign to managed identity on workload subscription (default: Reader)
+    -s, --subscription-id <id>     Workload subscription ID (default: current subscription)
+    -h, --help, -?                 Show this help message and exit
+
+EXAMPLES:
+    $0                                                                        # Use defaults
+    $0 -g my-rg -l eastus                                                     # Custom resource group and location
+    $0 --resource-group my-rg --location eastus                               # Using long options
+    $0 -g my-rg --role "Contributor" --subscription-id "12345678-..."         # Assign Contributor role
+    $0 -g my-rg --identity mi-tf --management-subscription-id "87654321-..."  # Custom identity and management subscription
+
+PREREQUISITES:
+    - Azure CLI installed and logged in (az login)
+    - Microsoft Fabric CLI installed and logged in (fab auth login)
+    - jq installed (recommended)
+    - Fabric Administrator role in your tenant
+
+The script will create:
+    1. App Registration for Fabric Terraform Provider
+    2. Storage Account for Terraform state backend
+    3. Entra security group for Fabric workload identities
+    4. Managed Identity for Terraform automation
+    5. Configure Fabric tenant settings for service principal access
+
+EOF
+    exit 0
+}
+
 error() {
     echo "Error: $1" >&2
     exit 1
@@ -25,7 +65,7 @@ if ! [[ "$subscription_id" =~ ^[0-9a-fA-F-]{36}$ ]]; then
 fi
 
 # Parse options
-while getopts ":g:l:" opt; do
+while getopts ":g:i:l:m:r:s:h?-:" opt; do
     case $opt in
         g) rg="$OPTARG"
         ;;
@@ -39,6 +79,39 @@ while getopts ":g:l:" opt; do
         ;;
         s) workload_subscription_id="$OPTARG"
         ;;
+        h|?) usage
+        ;;
+        -) case "${OPTARG}" in
+            help) usage
+            ;;
+            resource-group) rg="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+            ;;
+            resource-group=*) rg="${OPTARG#*=}"
+            ;;
+            location) location="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+            ;;
+            location=*) location="${OPTARG#*=}"
+            ;;
+            identity) managed_identity_name="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+            ;;
+            identity=*) managed_identity_name="${OPTARG#*=}"
+            ;;
+            management-subscription-id) management_subscription_id="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+            ;;
+            management-subscription-id=*) management_subscription_id="${OPTARG#*=}"
+            ;;
+            role) workload_subscription_rbac_role="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+            ;;
+            role=*) workload_subscription_rbac_role="${OPTARG#*=}"
+            ;;
+            subscription-id) workload_subscription_id="${!OPTIND}"; OPTIND=$(( $OPTIND + 1 ))
+            ;;
+            subscription-id=*) workload_subscription_id="${OPTARG#*=}"
+            ;;
+            *) echo "Invalid option --$OPTARG" >&2; exit 1
+            ;;
+           esac
+        ;;
         \?) echo "Invalid option -$OPTARG" >&2; exit 1
         ;;
     esac
@@ -47,91 +120,30 @@ done
 # Set default values for management_subscription_id and workload_subscription_id if not specified
 rg="${rg:-rg-terraform}"
 managed_identity_name="${managed_identity_name:-mi-terraform}"
-location="${location:-uksouth}"
+location="${location:-${AZURE_DEFAULTS_LOCATION:-uksouth}}"
 management_subscription_id="${management_subscription_id:-$subscription_id}"
 workload_subscription_id="${workload_subscription_id:-$subscription_id}"
-workload_subscription_rbac_role="${workload_subscription_rbac_role:-""}"
+workload_subscription_rbac_role="${workload_subscription_rbac_role:-Reader}"
+
+
 
 ########################################################################
-## Create App Reg for Microsoft Fabric Terraform Provider's user context
+## Create Resource Group
 ########################################################################
 
 
-echo "Creating App Registration for Microsoft Fabric Terraform Provider's user context..."
+# Set the subscription for management operations
+az account set --subscription "$management_subscription_id"
 
-app_name="fabric_terraform_provider"
-identifier_uri="api://$app_name"
-
-# Create the app registration
-az ad app create --display-name "$app_name" --identifier-uris "$identifier_uri"
-
-# Set required resource accesses
-required_resource_accesses='[
-    {
-        "resourceAppId": "00000003-0000-0000-c000-000000000000",
-        "resourceAccess": [
-            {"id": "e1fe6dd8-ba31-4d61-89e7-88639da4683d", "type": "Scope"},
-            {"id": "b340eb25-3456-403f-be2f-af7a0d370277", "type": "Scope"}
-        ]
-    },
-    {
-        "resourceAppId": "00000009-0000-0000-c000-000000000000",
-        "resourceAccess": [
-            {"id": "4eabc3d1-b762-40ff-9da5-0e18fdf11230", "type": "Scope"},
-            {"id": "b2f1b2fa-f35c-407c-979c-a858a808ba85", "type": "Scope"},
-            {"id": "445002fb-a6f2-4dc1-a81e-4254a111cd29", "type": "Scope"},
-            {"id": "8b01a991-5a5a-47f8-91a2-84d6bfd72c02", "type": "Scope"}
-        ]
-    }
-]'
-az ad app update --id "$identifier_uri" --required-resource-accesses "$required_resource_accesses"
-
-# Set API permissions and pre-authorized applications
-api_permissions='{
-    "acceptMappedClaims": null,
-    "knownClientApplications": [],
-    "oauth2PermissionScopes": [
-        {
-            "adminConsentDescription": "Allows connection to backend services for Microsoft Fabric Terraform Provider",
-            "adminConsentDisplayName": "Microsoft Fabric Terraform Provider",
-            "id": "1ca1271c-e2c0-437c-af9a-3a92e745a24d",
-            "isEnabled": true,
-            "type": "User",
-            "userConsentDescription": "Allows connection to backend services for Microsoft Fabric Terraform Provider",
-            "userConsentDisplayName": "Microsoft Fabric Terraform Provider",
-            "value": "access"
-        }
-    ],
-    "preAuthorizedApplications": [
-        {"appId": "871c010f-5e61-4fb1-83ac-98610a7e9110", "delegatedPermissionIds": ["1ca1271c-e2c0-437c-af9a-3a92e745a24d"]},
-        {"appId": "00000009-0000-0000-c000-000000000000", "delegatedPermissionIds": ["1ca1271c-e2c0-437c-af9a-3a92e745a24d"]},
-        {"appId": "1950a258-227b-4e31-a9cf-717495945fc2", "delegatedPermissionIds": ["1ca1271c-e2c0-437c-af9a-3a92e745a24d"]},
-        {"appId": "04b07795-8ddb-461a-bbee-02f9e1bf7b46", "delegatedPermissionIds": ["1ca1271c-e2c0-437c-af9a-3a92e745a24d"]}
-    ],
-    "requestedAccessTokenVersion": null
-}'
-az ad app update --id "$identifier_uri" --set api="$api_permissions"
-
-# Add the signed-in user as owner
-owner_id=$(az ad signed-in-user show --query id -otsv)
-az ad app owner add --id "$identifier_uri" --owner-object-id "$owner_id"
-
-# Show the created app registration
-az ad app show --id "$identifier_uri" --output jsonc
-
-echo "App Registration created."
+# Create resource group if it doesn't exist
+echo "Creating resource group $rg..."
+az group create --name "$rg" --location "$location"
 
 ########################################################################
 ## Create Storage Account for Terraform State Remote Backend
 ########################################################################
 
 echo "Creating storage account for Terraform state remote backend..."
-
-# Set the subscription for management operations
-az account set --subscription "$management_subscription_id"
-
-# Create resource group if it doesn't exist
-az group create --name "$rg" --location "$location"
 
 # Generate a unique storage account name
 storage_account_name="terraformfabric$(az group show --name "$rg"  --query id -otsv | sha1sum | cut -c1-8)"
@@ -152,24 +164,15 @@ az storage account create \
 # Get storage account resource ID
 storage_account_id=$(az storage account show --name "$storage_account_name" --resource-group "$rg" --query id -otsv)
 
-# Enable blob versioning and retention
-az storage account blob-service-properties update \
-    --account-name "$storage_account_name" \
-    --enable-versioning true \
-    --enable-delete-retention true \
-    --delete-retention-days 7
+########################################################################
+## Create Managed Identity for Terraform Automation
+########################################################################
 
-# Create containers for prod and dev
-az storage container create --name prod --account-name "$storage_account_name" --auth-mode login
-az storage container create --name dev --account-name "$storage_account_name" --auth-mode login
+echo "Creating Managed Identity for Terraform..."
 
-# Assign Storage Blob Data Contributor role to the signed-in user for the dev container
-az role assignment create \
-    --assignee "$(az ad signed-in-user show --query id -otsv)" \
-    --scope "$storage_account_id/blobServices/default/containers/dev" \
-    --role "Storage Blob Data Contributor"
-
-echo "Storage account created."
+az identity create --name $managed_identity_name --resource-group $rg --location $location
+managed_identity_object_id=$(az identity show --name $managed_identity_name --resource-group $rg --query principalId -otsv)
+managed_identity_client_id=$(az identity show --name $managed_identity_name --resource-group $rg --query clientId -otsv)
 
 ########################################################################
 ## Create Entra group and add into Fabric tenant settings
@@ -187,33 +190,64 @@ az ad group create --display-name "$fabric_group_name" --description "$fabric_gr
 fabric_group_id=$(az ad group show --group "$fabric_group_name" --query id -otsv)
 echo "Created security group $fabric_group_name"
 
+########################################################################
+## Update storage account properties
+########################################################################
+
+echo "Updating storage account properties..."
+# Enable blob versioning and retention
+az storage account blob-service-properties update \
+    --account-name "$storage_account_name" \
+    --enable-versioning true \
+    --enable-delete-retention true \
+    --delete-retention-days 7
+
+# Create containers for prod and dev
+az storage container create --name prod --account-name "$storage_account_name" --auth-mode login
+az storage container create --name dev --account-name "$storage_account_name" --auth-mode login
+
+# Assign Storage Blob Data Contributor role to the signed-in user for the dev container
+az role assignment create \
+    --assignee "$(az ad signed-in-user show --query id -otsv)" \
+    --scope "$storage_account_id/blobServices/default/containers/dev" \
+    --role "Storage Blob Data Contributor"
+
+echo "Storage account updated and containers created."
+
+########################################################################
+## Configure Fabric tenant settings for service principal access
+########################################################################
+
+echo "Adding Entra security group to Fabric tenant settings..."
+
 body=$(jq -nc --arg oid "$fabric_group_id" --arg name "$fabric_group_name" '{"enabled":true,"canSpecifySecurityGroups":true,"enabledSecurityGroups":[{"graphId":$oid,"name":$name}]}')
-fab api --method post admin/tenantsettings/ServicePrincipalAccessGlobalAPIs/update -i "$body"
+jq . <<< "$body"
+
+sleep 1
+echo " - ServicePrincipalAccessPermissionAPIs"
 fab api --method post admin/tenantsettings/ServicePrincipalAccessPermissionAPIs/update -i "$body"
+sleep 1
+echo " - ServicePrincipalAccessGlobalAPIs"
+fab api --method post admin/tenantsettings/ServicePrincipalAccessGlobalAPIs/update -i "$body"
+sleep 1
+echo " - AllowServicePrincipalsCreateAndUseProfiles"
 fab api --method post admin/tenantsettings/AllowServicePrincipalsCreateAndUseProfiles/update -i "$body"
 
 fab api --method get admin/tenantsettings --query "text.tenantSettings[?tenantSettingGroup == 'Developer settings']" | jq .
 
-echo "Entra security group created and added to Fabric tenant settings."
+echo "Entra security group added to Fabric tenant settings."
 
 ########################################################################
-## Create Entra group and add into Fabric tenant settings
+## Managed identity role assignments, app roles, and group membership
 ########################################################################
 
-echo "Creating Managed Identity for Terraform..."
-
-az identity create --name $managed_identity_name --resource-group $rg --location $location
-managed_identity_object_id=$(az identity show --name $managed_identity_name --resource-group $rg --query principalId -otsv)
-managed_identity_client_id=$(az identity show --name $managed_identity_name --resource-group $rg --query clientId -otsv)
-
+echo "Assigning Storage Blob Data Contributor role to managed identity for prod container..."
 az role assignment create \
     --assignee $managed_identity_object_id \
     --scope "$storage_account_id/blobServices/default/containers/prod" \
     --role "Storage Blob Data Contributor"
 
-az ad group member add --group "$fabric_group_name" --member-id "$managed_identity_object_id"
 
-# Assign RBAC role if set
 if [[ -n "$workload_subscription_rbac_role" ]]; then
     echo "Assigning role '$workload_subscription_rbac_role' to managed identity in subscription $workload_subscription_id..."
 
@@ -223,13 +257,21 @@ if [[ -n "$workload_subscription_rbac_role" ]]; then
         --role "$workload_subscription_rbac_role"
 fi
 
-# Assign Entra app roles
-
-entra_roles="['User.ReadBasic.All','Group.Read.All']"
+echo "Assigning app roles to managed identity in Microsoft Graph..."
+graph_app_id="00000003-0000-0000-c000-000000000000"
 graph_object_id=$(az ad sp show --id "00000003-0000-0000-c000-000000000000" --query id -otsv)
-app_role_ids=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 --query "appRoles[?contains(\`$entra_roles\`, value)].id" -otsv)
-for role in $app_role_ids
+
+for role in User.Read.All Group.Read.All
 do
-  body=$(jq -nc --arg graph "$graph_object_id" --arg mi "$managed_identity_object_id" --arg role "$role" '{principalId:$mi,resourceId:$graph,appRoleId:$role}')
+  app_role_id=$(az ad sp show --id $graph_app_id --query "appRoles[?value == '"$role"'].id" -otsv)
+  body=$(jq -nc --arg graph "$graph_object_id" --arg mi "$managed_identity_object_id" --arg role "$app_role_id" '{principalId:$mi,resourceId:$graph,appRoleId:$role}')
+  echo "Adding app role $role:"
+  jq . <<< $body
   az rest --method post --uri "https://graph.microsoft.com/v1.0/servicePrincipals/${managed_identity_object_id}/appRoleAssignments" --body "$body"
 done
+
+echo -n "Adding managed identity to Entra security group $fabric_group_name... "
+az ad group member add --group "$fabric_group_name" --member-id "$managed_identity_object_id"
+echo "done.
+
+########################################################################
