@@ -55,6 +55,7 @@ resource "azurerm_storage_container" "adls_container" {
 }
 
 resource "azurerm_role_assignment" "online_sami_blob_reader" {
+  for_each             = var.rbac ? toset(["online_sami_blob_reader"]) : []
   scope                = azurerm_storage_account.online.id
   role_definition_name = "Storage Blob Data Reader"
   principal_id         = fabric_workspace.fabric["Online"].identity.service_principal_id

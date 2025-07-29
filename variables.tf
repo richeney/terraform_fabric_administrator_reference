@@ -92,3 +92,9 @@ variable "fabric_administrators" {
   type        = string
   default     = "Microsoft Fabric Administrators"
 }
+
+variable "rbac" {
+  description = "Whether to create RBAC role assignments for ADLS Gen2 storage account access as it needs an elevated permission."
+  type        = bool
+  default     = false
+}
