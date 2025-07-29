@@ -50,18 +50,18 @@ resource "azurerm_storage_account" "online" {
 
 resource "azurerm_storage_container" "adls_container" {
   name                  = "silver"
-  storage_account_id    = azurerm_storage_account.adls.id
+  storage_account_id    = azurerm_storage_account.online.id
   container_access_type = "private"
 }
 
 resource "azurerm_role_assignment" "online_sami_blob_reader" {
-  scope                = azurerm_storage_account.adls.id
+  scope                = azurerm_storage_account.online.id
   role_definition_name = "Storage Blob Data Reader"
   principal_id         = fabric_workspace.fabric["Online"].identity.service_principal_id
 }
 
 resource "fabric_shortcut" "online_silver" {
-  for_each = var.connection_id != null ? ["silver"] : []
+  for_each     = toset(var.connection_id != null ? ["silver"] : [])
   workspace_id = fabric_workspace.fabric["Online"].id
   item_id      = fabric_lakehouse.silver["Online"].id
   path         = "Files/My Subfolder"

@@ -1,0 +1,15 @@
+{
+  "displayName": "Online ADLS Gen2 connection",
+  "connectivityType": "ShareableCloud",
+  "connectionDetails": {
+    "path": "https://onlineadls094b398c.dfs.core.windows.net/",
+    "type": "AzureDataLakeStorage"
+  },
+  "privacyLevel": "None",
+  "credentialDetails": {
+    "credentialType": "OAuth2",
+    "singleSignOnType": "None",
+    "connectionEncryption": "Encrypted",
+    "skipTestConnection": false
+  }
+}

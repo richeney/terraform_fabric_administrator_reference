@@ -1,5 +1,3 @@
-data "azurerm_client_config" "current" {}
-
 data "azuread_group" "fabric_workload_identities" {
   display_name = var.fabric_workload_identities
 }
