@@ -1,3 +1,4 @@
+
 data "fabric_capacity" "fabric" {
   display_name = azurerm_fabric_capacity.fabric.name
 
@@ -15,6 +16,7 @@ data "azuread_group" "group" {
 }
 
 locals {
+  # Create a map of workspaces with their details
   workspaces = {
     for workspace in var.workspaces : workspace.name => {
       name         = workspace.name

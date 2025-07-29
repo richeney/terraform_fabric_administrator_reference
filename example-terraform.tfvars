@@ -1,6 +1,6 @@
 subscription_id      = "73568139-5c52-4066-a406-3e8533bb0f15"
 resource_group_name  = "fabric-test"
-fabric_capacity_name = "fabric-test-capacity"
+fabric_capacity_name = "fabrictestcapacity"
 sku                  = "F2"
 
 workspaces = [

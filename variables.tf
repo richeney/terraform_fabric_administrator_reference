@@ -79,6 +79,8 @@ variable "fabric_capacity_name" {
   default     = "fabric"
 }
 
+// Entra Variables
+
 variable "fabric_workload_identities" {
   description = "The Microsoft Fabric Workload Identities group. Must only contain service principals."
   type        = string
